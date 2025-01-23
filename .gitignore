@@ -1,2 +1,4 @@
 *.txt
 *.env
+secrets.py
+__pycache__
