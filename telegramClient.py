@@ -1,21 +1,9 @@
-import matplotlib.pyplot as plt
 from PIL import Image
 import telegram
 import asyncio
 from io import BytesIO
 
 secrets = __import__("secrets")  # avoid LSP errors
-
-
-def sendTelegram(image_arr):
-    fig, axs = plt.subplots(2, 2)
-
-    for i, ax in enumerate(axs.flat):
-        ax.imshow(image_arr[i])  # Display image from the array
-        ax.axis("off")
-
-    plt.tight_layout()  # Makes the layout tight
-    plt.show()
 
 
 def sendTelegramPictures(image_arr, text):
@@ -49,4 +37,4 @@ if __name__ == "__main__":
     test_arr.append(Image.new("RGB", (300, 200), (0, 0, 255)))
     test_arr.append(Image.new("RGB", (300, 200), (255, 255, 0)))
 
-    sendTelegramPictures(test_arr)
+    sendTelegramPictures(test_arr, "testRun")
