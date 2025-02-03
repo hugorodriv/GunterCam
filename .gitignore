@@ -1,3 +1,5 @@
 *.env
 secrets.py
 __pycache__
+*.zip
+*.tar
