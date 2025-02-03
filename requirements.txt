@@ -1,0 +1,6 @@
+requests
+urllib3
+python-telegram-bot
+pillow
+numpy
+python-opencv-headless
