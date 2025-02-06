@@ -1,4 +1,3 @@
-from PIL import Image
 import telegram
 import asyncio
 from io import BytesIO

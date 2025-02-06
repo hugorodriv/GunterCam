@@ -84,6 +84,9 @@ def createGif(img_arr, duration=300):
 def mainLoop():
     image_b = getImage()
 
+    # image not in detection loop, but will get included in the final GIF
+    image_0 = getImage()
+
     while True:
         currentTime = round(time.time() * 1000)
         image_a = getImage()
@@ -91,7 +94,6 @@ def mainLoop():
         try:
             diff = getImageDiff(image_a, image_b)
         except OSError as e:
-            # diff1 = 0
             diff = 0
             print(
                 f"OS Error!!!!!!! {datetime.datetime.now().strftime('%A, %H:%M:%S')} \n {e}"
@@ -101,7 +103,7 @@ def mainLoop():
             print(f"Movement {datetime.datetime.now().strftime('%A, %H:%M:%S')}")
             print(f"Diff: {diff:.2f}")
 
-            image_arr = [image_b, image_a]
+            image_arr = [image_0, image_b, image_a]
 
             for _ in range(config.num_photos_after_detection):
                 if (round(time.time() * 1000) - currentTime) < config.min_freq:
@@ -131,6 +133,7 @@ def mainLoop():
                 (config.min_freq - (round(time.time() * 1000) - currentTime)) / 1000
             )
 
+        image_0 = image_b
         image_b = image_a
 
 
