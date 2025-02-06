@@ -31,11 +31,25 @@ def sendTelegramPictures(image_arr, text):
     asyncio.run(send_message())
 
 
-if __name__ == "__main__":
-    test_arr = []
-    test_arr.append(Image.new("RGB", (300, 200), (255, 0, 0)))
-    test_arr.append(Image.new("RGB", (300, 200), (0, 255, 0)))
-    test_arr.append(Image.new("RGB", (300, 200), (0, 0, 255)))
-    test_arr.append(Image.new("RGB", (300, 200), (255, 255, 255)))
+def sendTelegramGif(gif_buffer, text):
+    bot = telegram.Bot(secrets.TELEGRAM_TOKEN)
 
-    sendTelegramPictures(test_arr, "Test run")
+    async def send_message():
+        try:
+            gif_buffer.name = "animation.gif"  # Set a name for the file
+            await asyncio.wait_for(
+                bot.send_animation(
+                    chat_id=secrets.TELEGRAM_GROUP_ID,
+                    animation=gif_buffer,
+                    caption=text,
+                ),
+                timeout=60,
+            )
+        except (telegram.error.TimedOut, asyncio.TimeoutError):
+            print("Telegram request timed out but image may have been sent.")
+
+    asyncio.run(send_message())
+
+
+if __name__ == "__main__":
+    pass

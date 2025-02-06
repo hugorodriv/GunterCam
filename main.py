@@ -1,11 +1,12 @@
 import requests
 import time
-from PIL import Image, ImageChops
+from PIL import Image
 from io import BytesIO
 import urllib3
 import datetime
 import numpy as np
 import cv2
+import io
 
 import telegramClient
 import config
@@ -28,50 +29,7 @@ def getImage():
         return None
 
 
-#### Testing of different algorithms ####
-def getImageDiff_original(a: Image.Image, b: Image.Image):
-    size = (64, 64)
-    a_resized = a.resize(size).convert("L")  # Convert to grayscale
-    b_resized = b.resize(size).convert("L")
-
-    # Compute the absolute difference
-    diff = ImageChops.difference(a_resized, b_resized)
-
-    # Calculate the sum of pixel differences (lower sum means more similarity)
-    diff_score = sum(diff.getdata())
-    return diff_score
-
-
-def getImageDiff_test2(a: Image.Image, b: Image.Image):
-    size = (128, 128)
-    a_resized = a.resize(size).convert("L")  # Convert to grayscale
-    b_resized = b.resize(size).convert("L")
-
-    # Convert to numpy arrays for OpenCV operations
-    a_np = np.array(a_resized)
-    b_np = np.array(b_resized)
-
-    # Compute the absolute difference
-    diff = cv2.absdiff(a_np, b_np)
-
-    # Apply a binary threshold to eliminate small differences (e.g., lighting changes)
-    _, thresh_diff = cv2.threshold(diff, 50, 255, cv2.THRESH_BINARY)
-
-    # Find contours to detect the shape of the moving object
-    contours, _ = cv2.findContours(
-        thresh_diff, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
-    )
-
-    # Calculate the total area of all contours (as a measure of movement)
-    diff_score = sum(cv2.contourArea(c) for c in contours)
-
-    # normalize score
-    total_area = size[0] * size[1]
-    diff_score = diff_score / total_area
-    return diff_score
-
-
-def getImageDiff_test1(a: Image.Image, b: Image.Image):
+def getImageDiff(a: Image.Image, b: Image.Image):
     size = (128, 128)
     a_resized = a.resize(size).convert("L")  # Convert to grayscale
     b_resized = b.resize(size).convert("L")
@@ -108,6 +66,21 @@ def getImageDiff_test1(a: Image.Image, b: Image.Image):
     return diff_score
 
 
+def createGif(img_arr, duration=300):
+    buffer = io.BytesIO()
+    img_arr[0].save(
+        buffer,
+        format="GIF",
+        save_all=True,
+        append_images=img_arr[1:],
+        loop=0,
+        optimize=False,
+        duration=duration,
+    )
+    buffer.seek(0)
+    return buffer
+
+
 def mainLoop():
     image_b = getImage()
 
@@ -116,38 +89,32 @@ def mainLoop():
         image_a = getImage()
 
         try:
-            # diff = getImageDiff(image_a, image_b)
-            diff1 = getImageDiff_test2(image_a, image_b)
-            diff2 = getImageDiff_test1(image_a, image_b)
+            diff = getImageDiff(image_a, image_b)
         except OSError as e:
-            diff1 = 0
-            diff2 = 0
+            # diff1 = 0
+            diff = 0
             print(
                 f"OS Error!!!!!!! {datetime.datetime.now().strftime('%A, %H:%M:%S')} \n {e}"
             )
 
-        if diff2 >= config.min_diff:
+        if diff >= config.min_diff:
             print(f"Movement {datetime.datetime.now().strftime('%A, %H:%M:%S')}")
-            print(f"Algo.1:{diff1:.2f}, Algo.2(*):{diff2:.2f}")
+            print(f"Diff: {diff:.2f}")
 
             image_arr = [image_b, image_a]
 
             for _ in range(config.num_photos_after_detection):
-                if (
-                    round(time.time() * 1000) - currentTime
-                ) < config.min_freq_detection:
+                if (round(time.time() * 1000) - currentTime) < config.min_freq:
                     time.sleep(
-                        (
-                            config.min_freq_detection
-                            - (round(time.time() * 1000) - currentTime)
-                        )
+                        (config.min_freq - (round(time.time() * 1000) - currentTime))
                         / 1000
                     )
                 image_arr.append(getImage())
 
-            telegramClient.sendTelegramPictures(
-                image_arr,
-                text=f"Algo.1:{diff1:.2f}, Algo.2:{diff2:.2f}, Time:{datetime.datetime.now().strftime('%A, %H:%M:%S')}",
+            gif_buffer = createGif(image_arr)
+            telegramClient.sendTelegramGif(
+                gif_buffer,
+                text=f"Diff:{diff:.2f} Time:{datetime.datetime.now().strftime('%A, %H:%M:%S')}",
             )
 
             if (round(time.time() * 1000) - currentTime) < config.cooldown:
@@ -155,7 +122,7 @@ def mainLoop():
                     (config.cooldown - (round(time.time() * 1000) - currentTime)) / 1000
                 )
 
-            # It has been 30s?, update image a again
+            # It has been 30s, update image a again
             image_a = getImage()
 
         # Ensure that, at minimum, the time between pictures is min_freq
@@ -167,10 +134,8 @@ def mainLoop():
         image_b = image_a
 
 
-print(f"Started. Time:{datetime.datetime.now().strftime('%A, %H:%M:%S')}")
-
-
 if __name__ == "__main__":
+    print(f"Started. Time:{datetime.datetime.now().strftime('%A, %H:%M:%S')}")
     while True:
         try:
             mainLoop()
