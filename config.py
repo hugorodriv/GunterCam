@@ -11,5 +11,5 @@ min_diff = 0.05
 # time system will wait after detecting movement to start looking again
 cooldown = 10_000  # in ms
 
-# Number of photos that will be part of the GIF (+2 extra at the beggining from the detection phase)
+# Number of photos that will be part of the GIF (+2 extra at the beggining from the detection phase +1 extra from before the detection loop)
 num_photos_after_detection = 1
