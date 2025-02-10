@@ -12,4 +12,4 @@ min_diff = 0.05
 cooldown = 10_000  # in ms
 
 # Number of photos that will be part of the GIF (+2 extra at the beggining from the detection phase +1 extra from before the detection loop)
-num_photos_after_detection = 1
+num_photos_after_detection = 10

@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     libfreetype6-dev \
     gcc \
+    g++ \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -21,4 +22,4 @@ RUN pip install --no-cache-dir --upgrade pip \
 COPY . /app/
 
 ENV TZ=Europe/Madrid
-CMD ["python", "main.py"]
+ENTRYPOINT ["/bin/bash", "-c", "python /app/main.py"]
